@@ -32,7 +32,7 @@ class Connector : boost::noncopyable,
  public:
   typedef boost::function<void (int sockfd)> NewConnectionCallback;
 
-  Connector(EventLoop* loop, const InetAddress& serverAddr);
+  Connector(EventLoop* loop, const InetAddress& serverAddr, muduo::string bindif="");
   ~Connector();
 
   void setNewConnectionCallback(const NewConnectionCallback& cb)
@@ -67,6 +67,9 @@ class Connector : boost::noncopyable,
   boost::scoped_ptr<Channel> channel_;
   NewConnectionCallback newConnectionCallback_;
   int retryDelayMs_;
+
+  string bindifname="";
+
 };
 
 }

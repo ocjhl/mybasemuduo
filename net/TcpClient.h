@@ -31,7 +31,8 @@ class TcpClient : boost::noncopyable
   // TcpClient(EventLoop* loop, const string& host, uint16_t port);
   TcpClient(EventLoop* loop,
             const InetAddress& serverAddr,
-            const string& nameArg);
+            const string& nameArg,
+            muduo::string bindif="");
   ~TcpClient();  // force out-line dtor, for scoped_ptr members.
 
   void connect();

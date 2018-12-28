@@ -55,9 +55,10 @@ void removeConnector(const ConnectorPtr& connector)
 
 TcpClient::TcpClient(EventLoop* loop,
                      const InetAddress& serverAddr,
-                     const string& nameArg)
+                     const string& nameArg,
+                     muduo::string bindif)
   : loop_(CHECK_NOTNULL(loop)),
-    connector_(new Connector(loop, serverAddr)),
+    connector_(new Connector(loop, serverAddr, bindif)),
     name_(nameArg),
     connectionCallback_(defaultConnectionCallback),
     messageCallback_(defaultMessageCallback),

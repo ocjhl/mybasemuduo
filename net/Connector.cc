@@ -23,8 +23,9 @@ using namespace muduo::net;
 
 const int Connector::kMaxRetryDelayMs;
 
-Connector::Connector(EventLoop* loop, const InetAddress& serverAddr)
+Connector::Connector(EventLoop* loop, const InetAddress& serverAddr, muduo::string bindif)
   : loop_(loop),
+    bindifname(bindif),
     serverAddr_(serverAddr),
     connect_(false),
     state_(kDisconnected),
@@ -77,9 +78,34 @@ void Connector::stopInLoop()
   }
 }
 
+/* Set socket FD's option OPTNAME at protocol level LEVEL
+   to *OPTVAL (which is OPTLEN bytes long).
+   Returns 0 on success, -1 for errors.  */
+#include <net/if.h>    //for network interfaces
+int bindDevice(int sock, muduo::string ifname)
+{
+    struct ifreq interface;
+    int status;
+    strncpy(interface.ifr_ifrn.ifrn_name, ifname.c_str (), INET_ADDRSTRLEN);
+    status=setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (char *)&interface, sizeof(interface));
+    if (status != 0) {
+        perror("SO_BINDTODEVICE failed");
+    }
+    return status;
+}
+
 void Connector::connect()
 {
   int sockfd = sockets::createNonblockingOrDie(serverAddr_.family());
+
+  if(bindifname.size () > 0) {
+      if (bindDevice(sockfd, bindifname) != 0) {
+          LOG_SYSERR << "connect error in Connector::startInLoop when bindDevice" << errno;
+          retry(sockfd);
+          return;
+      }
+  }
+
   int ret = sockets::connect(sockfd, serverAddr_.getSockAddr());
   int savedErrno = (ret == 0) ? 0 : errno;
   switch (savedErrno)
